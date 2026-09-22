@@ -1,51 +1,79 @@
-﻿# Mô hình đe dọa: Cổng thông tin tra cứu điểm thi trực tuyến của sinh viên
+# Mô hình đe dọa: Cổng thông tin tra cứu điểm thi trực tuyến của sinh viên
 
 ## 1. Mô tả hệ thống và ba thành phần
 
-Hệ thống được lựa chọn là **Cổng thông tin tra cứu điểm thi trực tuyến của sinh viên**, phục vụ nhu cầu xem điểm tổng kết học kỳ và gửi đơn phúc khảo. Hệ thống gồm đúng ba thành phần cốt lõi:
-1. **Trình duyệt sinh viên (Frontend):** Ứng dụng web Single Page Application chạy trên trình duyệt của sinh viên, chịu trách nhiệm thu thập thông tin đăng nhập, hiển thị bảng điểm và cho phép gửi đơn phúc khảo.
-2. **Máy chủ ứng dụng Web API (Backend):** Máy chủ dịch vụ xử lý logic nghiệp vụ, xác thực danh tính sinh viên qua JWT, kiểm tra phân quyền và định tuyến truy vấn tới cơ sở dữ liệu.
-3. **Cơ sở dữ liệu PostgreSQL (Database):** Lưu trữ tập trung thông tin tài khoản người dùng, hàm băm mật khẩu, thông tin cá nhân và bảng điểm học tập của toàn bộ sinh viên.
+Mô hình được xây dựng cho một **cổng thông tin tra cứu điểm thi trực tuyến**, nơi sinh viên có thể đăng nhập để xem kết quả học tập và thực hiện yêu cầu phúc khảo. Hệ thống được đơn giản hóa thành đúng ba thành phần chính:
+
+1. **Trình duyệt của sinh viên (Frontend):** Giao diện web chạy trên trình duyệt, tiếp nhận thông tin đăng nhập, hiển thị kết quả học tập và hỗ trợ sinh viên gửi yêu cầu phúc khảo.
+
+2. **Máy chủ ứng dụng Web API (Backend):** Đảm nhiệm việc xử lý các yêu cầu từ Frontend, xác thực người dùng bằng JWT, thực hiện kiểm tra quyền truy cập và gửi các truy vấn cần thiết đến cơ sở dữ liệu.
+
+3. **Cơ sở dữ liệu PostgreSQL (Database):** Lưu giữ dữ liệu tài khoản, mật khẩu đã được băm, thông tin sinh viên và kết quả điểm thi.
+
+Luồng dữ liệu cơ bản của hệ thống được mô hình hóa theo hướng:
+
+**Trình duyệt sinh viên → Web API → PostgreSQL**
+
+Trong đó, trình duyệt gửi yêu cầu đến máy chủ ứng dụng; máy chủ thực hiện xác thực, kiểm tra quyền và truy xuất dữ liệu tương ứng từ cơ sở dữ liệu.
 
 ---
 
-## 2. Ba mối đe dọa được ưu tiên xử lý và lập luận lựa chọn
+## 2. Các mối đe dọa được ưu tiên xử lý
 
-Dựa trên ma trận rủi ro tính theo tích `Tác động × Khả năng` (thang điểm 1–5), ba mối đe dọa có thứ hạng cao nhất được lựa chọn để xử lý ngay gồm:
+Mức độ ưu tiên của từng mối đe dọa được xác định dựa trên công thức:
 
-| Mã | Tên mối đe dọa | Tác động | Khả năng | Tích rủi ro |
-| :---: | :--- | :---: | :---: | :---: |
-| **M01** | Trích xuất toàn bộ bảng điểm qua SQL Injection | 5 | 4 | **20** |
-| **M02** | Xem trộm điểm sinh viên khác qua lỗi phân quyền (IDOR) | 4 | 5 | **20** |
-| **M03** | Dò quét vét cạn (Brute-force) tài khoản quản trị viên | 4 | 4 | **16** |
+**Mức rủi ro = Tác động × Khả năng xảy ra**
 
-### Lý do chọn ba mối này:
-* **M01 (SQL Injection):** Điểm cuối tra cứu điểm là giao diện công khai tiếp nhận dữ liệu từ người dùng. Nếu bị tấn công SQLi, kẻ xấu có thể đọc hoặc xóa sạch toàn bộ cơ sở dữ liệu điểm thi, dẫn đến việc sụp đổ hoàn toàn tính bí mật và toàn vẹn của hệ thống.
-* **M02 (IDOR - Lỗi phân quyền mức đối tượng):** Bất kỳ sinh viên nào sau khi đăng nhập hợp lệ đều có thể dễ dàng thay đổi tham số trên URL để xem trộm điểm của bạn bè. Khả năng xảy ra đạt mức tối đa (5/5) do thao tác tấn công rất đơn giản nhưng gây ảnh hưởng nghiêm trọng đến quyền riêng tư của hàng ngàn sinh viên.
-* **M03 (Brute-force đăng nhập):** Giao diện đăng nhập đối mặt trực tiếp với Internet. Nếu thiếu cơ chế giới hạn tần suất (Rate Limiting), kẻ tấn công tự động hóa có thể nhanh chóng chiếm quyền kiểm soát tài khoản quản trị viên và can thiệp sửa đổi kết quả thi.
+Với thang điểm từ 1 đến 5 cho mỗi yếu tố, ba mối đe dọa được đưa vào nhóm cần xử lý trước là:
 
-### Thừa nhận phần bị bỏ lại (Trade-offs):
-Các mối đe dọa còn lại (**M04 đến M08**) có mức độ rủi ro thấp hơn (tích từ 5 đến 12) nên tạm thời được chấp nhận hoãn xử lý trong đợt đầu nhằm tối ưu hóa nguồn lực phát triển:
-* **M04 (Stored XSS)** và **M05 (Nghe lén HTTP):** M04 chỉ ảnh hưởng cục bộ tới tài khoản khảo thí và có thể bù đắp một phần nhờ cơ chế CSP; M05 được giảm thiểu đáng kể vì hệ thống triển khai trên mạng trường học có tường lửa nội bộ và sẽ được nâng cấp HTTPS ở giai đoạn sau.
-* **M06, M07, M08:** M06 và M08 yêu cầu kẻ tấn công phải có quyền truy cập sâu vào hạ tầng nội bộ (khả năng xảy ra rất thấp: 1–2/5); M07 (DoS tài nguyên) chỉ ảnh hưởng tính sẵn sàng trong thời gian ngắn và có thể phục hồi bằng cách khởi động lại dịch vụ.
+| Mã | Mối đe dọa | Tác động | Khả năng | Điểm rủi ro |
+|---|---|---:|---:|---:|
+| **M01** | Khai thác SQL Injection để truy xuất dữ liệu điểm | 5 | 4 | **20** |
+| **M02** | Truy cập điểm của sinh viên khác do lỗi IDOR | 4 | 5 | **20** |
+| **M03** | Brute-force tài khoản quản trị viên | 4 | 4 | **16** |
+
+### Cơ sở lựa chọn
+
+**M01 – SQL Injection:**  
+Các chức năng tra cứu của hệ thống phải tiếp nhận dữ liệu do người dùng cung cấp. Nếu dữ liệu đầu vào không được xử lý đúng cách, **khi tồn tại lỗ hổng SQL Injection**, kẻ tấn công có thể can thiệp vào câu truy vấn và truy cập trái phép dữ liệu trong cơ sở dữ liệu. Với hệ thống chứa bảng điểm của nhiều sinh viên, hậu quả có thể ảnh hưởng đồng thời đến tính bí mật và tính toàn vẹn của dữ liệu.
+
+**M02 – IDOR:**  
+Lỗi IDOR có thể xuất hiện khi Backend chỉ dựa vào mã định danh đối tượng được gửi từ phía người dùng mà không kiểm tra quyền sở hữu tương ứng. **Nếu cơ chế phân quyền không xác nhận sinh viên đang truy cập đúng dữ liệu của mình**, một tài khoản hợp lệ có thể lợi dụng việc thay đổi `student_id` để xem thông tin của người khác. Vì khả năng khai thác tương đối đơn giản và ảnh hưởng trực tiếp đến dữ liệu học tập, mối đe dọa này được đánh giá ở mức khả năng 5/5.
+
+**M03 – Brute-force đăng nhập:**  
+Trang đăng nhập là điểm tiếp xúc trực tiếp với người sử dụng. **Trong trường hợp API đăng nhập không có cơ chế giới hạn số lần thử**, kẻ tấn công có thể tự động gửi nhiều yêu cầu xác thực để tìm thông tin đăng nhập hợp lệ. Nếu tài khoản bị nhắm đến là tài khoản quản trị, hậu quả có thể mở rộng sang việc thay đổi dữ liệu hoặc cấu hình hệ thống.
+
+### Các mối đe dọa chưa được xử lý ngay
+
+Các mối đe dọa từ **M04 đến M08** có điểm rủi ro thấp hơn, dao động từ 5 đến 12. Vì nguồn lực xử lý có giới hạn, nhóm tạm thời tập trung vào những rủi ro có điểm cao hơn trước.
+
+- **M04 – Stored XSS:** Tác động chủ yếu tập trung vào người dùng hoặc tài khoản có liên quan đến nội dung độc hại. Một phần rủi ro có thể được hạn chế thông qua các cơ chế như CSP.
+- **M05 – Nghe lén HTTP:** Rủi ro có thể giảm khi hệ thống được triển khai trong môi trường mạng có các biện pháp bảo vệ và được chuyển sang sử dụng HTTPS đầy đủ.
+- **M06 và M08:** Hai mối đe dọa này đòi hỏi mức độ tiếp cận sâu hơn vào môi trường hạ tầng nên được đánh giá có khả năng xảy ra thấp hơn.
+- **M07 – DoS tài nguyên:** Mối đe dọa chủ yếu ảnh hưởng đến khả năng phục vụ trong một khoảng thời gian nhất định và có thể được khôi phục bằng các biện pháp vận hành phù hợp.
+
+Việc chưa xử lý các mối đe dọa trên **không có nghĩa là chúng được xem là không quan trọng**, mà là nhóm chấp nhận xử lý ở giai đoạn sau để ưu tiên nguồn lực cho các rủi ro có điểm cao hơn.
 
 ---
 
-## 3. Ước lượng chi phí xử lý theo Nguyên lý thứ bảy
+## 3. Ước lượng chi phí xử lý
 
-Theo Nguyên lý thứ bảy (*Chi phí bảo vệ phải tương xứng với giá trị tài sản cần bảo vệ*), ngân sách bỏ ra để khắc phục ba mối đe dọa được tính toán như sau:
+Việc lựa chọn biện pháp xử lý được xem xét theo **Nguyên lý thứ bảy: chi phí bảo vệ cần tương xứng với giá trị của tài sản được bảo vệ**.
 
-1. **Mối đe dọa M01 (Chống SQL Injection):**
-   * **Chi phí ước lượng:** **16 giờ công kỹ sư** (tương đương khoảng 4.000.000 VNĐ).
-   * **Căn cứ:** 8 giờ kỹ sư rà soát mã nguồn chuyển toàn bộ câu lệnh thô sang Prepared Statements / ORM, và 8 giờ viết kiểm thử tự động.
-   * **So với tài sản:** Toàn bộ bảng điểm của nhà trường nếu bị rò rỉ sẽ gây thiệt hại uy tín và chi phí khắc phục ước tính vượt quá 200.000.000 VNĐ. Chi phí bỏ ra chỉ chiếm ~2% giá trị rủi ro tiềm ẩn.
+### M01 – Giảm thiểu SQL Injection
 
-2. **Mối đe dọa M02 (Chống lỗi phân quyền IDOR):**
-   * **Chi phí ước lượng:** **20 giờ công kỹ sư** (tương đương khoảng 5.000.000 VNĐ).
-   * **Căn cứ:** 12 giờ lập trình bổ sung middleware kiểm tra `student_id` từ token JWT khớp với bản ghi được truy vấn, và 8 giờ kiểm thử luồng phân quyền.
-   * **So với tài sản:** Bảo vệ bí mật thông tin học tập cho hơn 10.000 sinh viên, ngăn ngừa các khiếu nại pháp lý và khủng hoảng truyền thông có thể tốn kém hàng trăm triệu đồng.
+- **Chi phí dự kiến:** 16 giờ công kỹ sư, tương đương khoảng **4.000.000 VNĐ**.
+- **Cơ sở ước lượng:** Khoảng 8 giờ dành cho việc rà soát và thay thế các truy vấn SQL trực tiếp bằng Prepared Statements hoặc ORM; 8 giờ còn lại dành cho việc xây dựng và chạy các kiểm thử tự động.
+- **Cơ sở so sánh:** Dữ liệu điểm của toàn bộ sinh viên là tài sản có giá trị cao. Nếu xảy ra rò rỉ hoặc bị thay đổi trái phép, chi phí khắc phục và ảnh hưởng đến uy tín có thể lớn hơn nhiều so với chi phí triển khai biện pháp phòng vệ.
 
-3. **Mối đe dọa M03 (Chống Brute-force đăng nhập):**
-   * **Chi phí ước lượng:** **8 giờ công kỹ sư** (tương đương khoảng 2.000.000 VNĐ).
-   * **Căn cứ:** 4 giờ cấu hình giới hạn tần suất (Rate Limiting) tối đa 5 lần thử/phút tại API Gateway/Nginx, và 4 giờ kiểm thử tải.
-   * **So với tài sản:** Chi phí rất nhỏ nhưng loại bỏ hoàn toàn nguy cơ chiếm đoạt quyền quản trị cơ sở dữ liệu điểm thi.
+### M02 – Giảm thiểu lỗi IDOR
+
+- **Chi phí dự kiến:** 20 giờ công kỹ sư, tương đương khoảng **5.000.000 VNĐ**.
+- **Cơ sở ước lượng:** Khoảng 12 giờ để bổ sung cơ chế kiểm tra quyền truy cập, bảo đảm `student_id` được đối chiếu với danh tính trong JWT; 8 giờ tiếp theo dành cho kiểm thử các trường hợp truy cập hợp lệ và không hợp lệ.
+- **Cơ sở so sánh:** Biện pháp này giúp hạn chế việc một sinh viên có thể truy cập dữ liệu học tập của người khác và bảo vệ thông tin của hơn 10.000 sinh viên. Chi phí triển khai thấp hơn đáng kể so với hậu quả tiềm ẩn của việc lộ dữ liệu trên diện rộng.
+
+### M03 – Giảm thiểu Brute-force
+
+- **Chi phí dự kiến:** 8 giờ công kỹ sư, tương đương khoảng **2.000.000 VNĐ**.
+- **Cơ sở ước lượng:** 4 giờ để thiết lập Rate Limiting, giới hạn khoảng 5 lần thử đăng nhập mỗi phút tại API Gateway/Nginx; 4 giờ còn lại dành cho kiểm thử tải và kiểm tra khả năng hoạt động của cơ chế giới hạn.
+- **Cơ sở so sánh:** Đây là biện pháp có chi phí triển khai tương đối thấp nhưng giúp giảm đáng kể khả năng kẻ tấn công thử nhiều mật khẩu liên tiếp nhằm chiếm quyền truy cập tài khoản quản trị.
