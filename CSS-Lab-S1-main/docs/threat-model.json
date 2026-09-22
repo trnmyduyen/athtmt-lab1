@@ -1,0 +1,103 @@
+{
+  "he_thong": "Cổng thông tin tra cứu điểm thi trực tuyến của sinh viên",
+  "thanh_phan": [
+    {
+      "ten": "Trình duyệt sinh viên",
+      "vai_tro": "Giao diện web người dùng gửi yêu cầu HTTP đăng nhập và hiển thị kết quả điểm thi"
+    },
+    {
+      "ten": "Máy chủ ứng dụng Web API",
+      "vai_tro": "Tiếp nhận yêu cầu, xác thực phiên làm việc, kiểm tra quyền truy cập và truy vấn cơ sở dữ liệu"
+    },
+    {
+      "ten": "Cơ sở dữ liệu PostgreSQL",
+      "vai_tro": "Lưu trữ thông tin tài khoản người dùng, mật khẩu đã băm và toàn bộ dữ liệu bảng điểm thi"
+    }
+  ],
+  "moi_de_doa": [
+    {
+      "ma": "M01",
+      "phat_bieu": "Kẻ tấn công chưa xác thực gửi chuỗi ký tự SQL độc hại vào ô tra cứu mã sinh viên trên giao diện trình duyệt để trích xuất toàn bộ dữ liệu bảng điểm trong trường hợp máy chủ ứng dụng nối chuỗi truy vấn trực tiếp vào cơ sở dữ liệu.",
+      "nguyen_ly": 3,
+      "attack": "T1190",
+      "tac_dong": 5,
+      "kha_nang": 4
+    },
+    {
+      "ma": "M02",
+      "phat_bieu": "Một sinh viên đã đăng nhập sửa đổi giá trị tham số student_id trên đường dẫn URL API từ mã của mình sang mã của sinh viên khác để xem trộm kết quả học tập nếu máy chủ ứng dụng chỉ kiểm tra trạng thái đăng nhập mà không kiểm tra quyền sở hữu bản ghi.",
+      "nguyen_ly": 1,
+      "attack": "T1078.001",
+      "tac_dong": 4,
+      "kha_nang": 5
+    },
+    {
+      "ma": "M03",
+      "phat_bieu": "Kẻ tấn công liên tục gửi hàng chục nghìn yêu cầu đăng nhập với các mật khẩu phổ biến trong từ điển tới điểm cuối API xác thực nhằm dò mật khẩu tài khoản quản trị viên khi máy chủ ứng dụng không áp dụng cơ chế giới hạn tần suất yêu cầu.",
+      "nguyen_ly": 2,
+      "attack": "T1110.001",
+      "tac_dong": 4,
+      "kha_nang": 4
+    },
+    {
+      "ma": "M04",
+      "phat_bieu": "Kẻ tấn công chèn đoạn mã JavaScript độc hại vào trường nội dung phản hồi phúc khảo điểm để đánh cắp phiên đăng nhập của cán bộ khảo thí nếu máy chủ ứng dụng hiển thị trực tiếp dữ liệu này lên trình duyệt quản trị mà không khử khuẩn mã HTML.",
+      "nguyen_ly": 3,
+      "attack": "T1059.007",
+      "tac_dong": 4,
+      "kha_nang": 3
+    },
+    {
+      "ma": "M05",
+      "phat_bieu": "Kẻ tấn công trên cùng mạng nội bộ thực hiện bắt lén các gói tin truyền giữa trình duyệt và máy chủ ứng dụng để đọc mật khẩu và mã phiên đăng nhập dạng rõ khi hệ thống cấu hình giao thức HTTP không mã hóa thay vì bắt buộc dùng HTTPS.",
+      "nguyen_ly": 2,
+      "attack": "T1040",
+      "tac_dong": 4,
+      "kha_nang": 3
+    },
+    {
+      "ma": "M06",
+      "phat_bieu": "Người dùng khai thác quyền truy cập vào máy chủ ứng dụng để đọc thông tin cấu hình và trích xuất chuỗi kết nối cơ sở dữ liệu có mật khẩu toàn quyền nếu tệp cấu hình lưu trữ cứng mật khẩu quản trị thay vì nạp từ biến môi trường phân quyền.",
+      "nguyen_ly": 1,
+      "attack": "T1552.001",
+      "tac_dong": 5,
+      "kha_nang": 2
+    },
+    {
+      "ma": "M07",
+      "phat_bieu": "Kẻ tấn công gửi các yêu cầu tìm kiếm chứa biểu thức chính quy lặp vô hạn hoặc truy vấn lồng phức tạp tới máy chủ ứng dụng nhằm làm cạn kiệt tài nguyên CPU và bộ nhớ trong trường hợp hệ thống không giới hạn thời gian chờ tối đa cho mỗi yêu cầu.",
+      "nguyen_ly": 6,
+      "attack": "T1499.003",
+      "tac_dong": 3,
+      "kha_nang": 3
+    },
+    {
+      "ma": "M08",
+      "phat_bieu": "Cán bộ quản trị hoặc lập trình viên vô tình khôi phục bản sao lưu dữ liệu điểm thi vào máy chủ thử nghiệm mà không thay đổi mật khẩu mặc định khi máy chủ này mở cổng kết nối trực tiếp ra ngoài mạng Internet công cộng.",
+      "nguyen_ly": 3,
+      "attack": "T1078.001",
+      "tac_dong": 5,
+      "kha_nang": 1
+    }
+  ],
+  "chon_xu_ly": [
+    {
+      "ma": "M01",
+      "chi_phi": 16,
+      "don_vi": "giờ công kỹ sư",
+      "can_cu": "Ước lượng gồm 8 giờ rà soát mã nguồn chuyển đổi toàn bộ câu truy vấn sang dạng Prepared Statements bằng ORM và 8 giờ viết kiểm thử tự động; chi phí này tương đương khoảng 4 triệu VNĐ, thấp hơn rất nhiều so với giá trị tài sản dữ liệu bảng điểm thi và thiệt hại uy tín ước tính trên 200 triệu VNĐ nếu rò rỉ cơ sở dữ liệu."
+    },
+    {
+      "ma": "M02",
+      "chi_phi": 20,
+      "don_vi": "giờ công kỹ sư",
+      "can_cu": "Ước lượng gồm 12 giờ bổ sung middleware kiểm tra quyền sở hữu sinh viên đối với student_id trong mã thông báo JWT và 8 giờ kiểm thử tích hợp phân quyền; chi phí khoảng 5 triệu VNĐ, hoàn toàn tương xứng để bảo vệ quyền riêng tư thông tin học tập của 10.000 sinh viên, tránh các rủi ro pháp lý và khiếu nại trị giá hàng trăm triệu VNĐ."
+    },
+    {
+      "ma": "M03",
+      "chi_phi": 8,
+      "don_vi": "giờ công kỹ sư",
+      "can_cu": "Ước lượng gồm 4 giờ tích hợp thư viện express-rate-limit hoặc cấu hình rate limit trên Nginx/API Gateway và 4 giờ kiểm thử tải; chi phí khoảng 2 triệu VNĐ, rất nhỏ so với nguy cơ lộ tài khoản quản trị hệ thống dẫn đến việc mất toàn bộ tính toàn vẹn dữ liệu điểm thi."
+    }
+  ]
+}
